@@ -1,0 +1,15 @@
+# Global ignores
+node_modules/
+.env
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.vscode/
+.vs/
+.DS_Store
+
+# Project-specific
+harvester/**/bin/
+harvester/**/obj/
+model/.venv/
