@@ -13,3 +13,6 @@ __pycache__/
 harvester/**/bin/
 harvester/**/obj/
 model/.venv/
+model/books.csv
+model/books_fixed.csv
+model/books_cleaned.csv
