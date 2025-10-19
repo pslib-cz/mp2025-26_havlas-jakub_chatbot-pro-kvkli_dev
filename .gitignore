@@ -1,6 +1,5 @@
 # Global ignores
 node_modules/
-.env
 __pycache__/
 *.pyc
 *.pyo
@@ -8,6 +7,7 @@ __pycache__/
 .vscode/
 .vs/
 .DS_Store
+.env.local
 
 # Project-specific
 harvester/**/bin/
@@ -16,3 +16,6 @@ model/.venv/
 model/books.csv
 model/books_fixed.csv
 model/books_cleaned.csv
+books_cleaned.csv
+
+chroma_db/
