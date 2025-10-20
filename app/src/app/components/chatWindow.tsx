@@ -1,11 +1,8 @@
 "use client";
-
+import { Message } from "../types";
 import { useState, useEffect, useRef } from "react";
 
-interface Message {
-  role: "user" | "bot";
-  content: string;
-}
+
 
 export default function ChatWindow() {
   const [messages, setMessages] = useState<Message[]>([]);
