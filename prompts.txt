@@ -1,0 +1,77 @@
+could you create some seed data for this schema?
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Prompt {
+  promptId        Int           @id @default(autoincrement())
+  promptText      String        @db.Text
+  answerText      String        @db.Text
+  conversationId  Int
+  conversation    Conversation  @relation(fields: [conversationId], references: [conversationId])
+  userFeedback    Boolean?
+  // questionType   String?
+}
+
+model Conversation {
+  conversationId          Int       @id @default(autoincrement())
+  prompts                 Prompt[]
+  length                  Int
+  userFeedback            Boolean?
+  userFeedbackMessage     String?
+}
+
+
+make it in this format
+import { PrismaClient, Prisma } from "../app/generated/prisma";
+
+const prisma = new PrismaClient();
+
+const userData: Prisma.UserCreateInput[] = [
+  {
+    name: "Alice",
+    email: "alice@prisma.io",
+    posts: {
+      create: [
+        {
+          title: "Join the Prisma Discord",
+          content: "https://pris.ly/discord",
+          published: true,
+        },
+        {
+          title: "Prisma on YouTube",
+          content: "https://pris.ly/youtube",
+        },
+      ],
+    },
+  },
+  {
+    name: "Bob",
+    email: "bob@prisma.io",
+    posts: {
+      create: [
+        {
+          title: "Follow Prisma on Twitter",
+          content: "https://www.twitter.com/prisma",
+          published: true,
+        },
+      ],
+    },
+  },
+];
+
+export async function main() {
+  for (const u of userData) {
+    await prisma.user.create({ data: u });
+  }
+}
+
+main();
+-----------------------------
