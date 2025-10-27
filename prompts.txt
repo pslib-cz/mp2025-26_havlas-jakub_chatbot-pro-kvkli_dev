@@ -75,3 +75,35 @@ export async function main() {
 
 main();
 -----------------------------
+
+could you create graphql schema ane resolvers for this DATABASE
+
+could you create some seed data for this schema?
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Prompt {
+  promptId        Int           @id @default(autoincrement())
+  promptText      String        @db.Text
+  answerText      String        @db.Text
+  conversationId  Int
+  conversation    Conversation  @relation(fields: [conversationId], references: [conversationId])
+  userFeedback    Boolean?
+  // questionType   String?
+}
+
+model Conversation {
+  conversationId          Int       @id @default(autoincrement())
+  prompts                 Prompt[]
+  length                  Int
+  userFeedback            Boolean?
+  userFeedbackMessage     String?
+}
