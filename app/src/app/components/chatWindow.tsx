@@ -1,5 +1,5 @@
 "use client";
-import { Message } from "../types";
+import { Message } from "../types/Message";
 import { useState, useEffect, useRef } from "react";
 
 
