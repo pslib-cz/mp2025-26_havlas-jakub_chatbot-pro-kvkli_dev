@@ -21,16 +21,24 @@ export const typeDefs = gql`
   type Query {
     conversations: [Conversation!]!
     conversation(id: ID!): Conversation
-    prompts: [Prompt!]!
-    prompt(id: ID!): Prompt
   }
 
   type Mutation {
-    createConversation(length: Int!): Conversation!
-    addPrompt(
+    addPrompt(promptText: String!, conversationId: Int): AddPromptResponse!
+    addPromptFeedback(
       conversationId: Int!
-      promptText: String!
-      answerText: String!
+      promptNth: Int!
+      userFeedback: Boolean!
     ): Prompt!
+    addConvoFeedback(
+      conversationId: Int!
+      userFeedbackMessage: String
+      userFeedback: Boolean
+    ): Conversation!
+  }
+
+  type AddPromptResponse {
+    conversationId: Int!
+    prompt: Prompt!
   }
 `;

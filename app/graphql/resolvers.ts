@@ -1,76 +1,102 @@
 import { prisma } from '../lib/prisma';
-import { Conversation, Prompt } from '../generated/prisma';
-
-interface ConversationArgs {
-  id: string | number;
-}
-
-interface PromptArgs {
-  id: string | number;
-}
-
-interface CreateConversationArgs {
-  length: number;
-}
 
 interface AddPromptArgs {
-  conversationId: number;
   promptText: string;
-  answerText: string;
+  conversationId?: number | null;
+}
+
+interface AddPromptFeedbackArgs {
+  conversationId: number;
+  promptNth: number;
+  userFeedback: boolean;
+}
+
+interface AddConvoFeedbackArgs {
+  conversationId: number;
+  userFeedbackMessage?: string | null;
+  userFeedback?: boolean | null;
 }
 
 export const resolvers = {
   Query: {
-    conversations: async (): Promise<Conversation[]> => {
+    conversations: async () => {
       return prisma.conversation.findMany({
         include: { prompts: true },
       });
     },
-    conversation: async (
-      _: unknown,
-      args: ConversationArgs
-    ): Promise<Conversation | null> => {
+
+    conversation: async (_: unknown, { id }: { id: string }) => {
       return prisma.conversation.findUnique({
-        where: { conversationId: Number(args.id) },
+        where: { conversationId: Number(id) },
         include: { prompts: true },
-      });
-    },
-    prompts: async (): Promise<Prompt[]> => {
-      return prisma.prompt.findMany({
-        include: { conversation: true },
-      });
-    },
-    prompt: async (
-      _: unknown,
-      args: PromptArgs
-    ): Promise<Prompt | null> => {
-      return prisma.prompt.findUnique({
-        where: { promptId: Number(args.id) },
-        include: { conversation: true },
       });
     },
   },
 
   Mutation: {
-    createConversation: async (
-      _: unknown,
-      args: CreateConversationArgs
-    ): Promise<Conversation> => {
-      return prisma.conversation.create({
-        data: { length: args.length },
-      });
-    },
-    addPrompt: async (
-      _: unknown,
-      args: AddPromptArgs
-    ): Promise<Prompt> => {
-      const { conversationId, promptText, answerText } = args;
-      return prisma.prompt.create({
+    // 1️⃣ Add Prompt (and create conversation if needed)
+    addPrompt: async (_: unknown, { promptText, conversationId }: AddPromptArgs) => {
+      let convoId = conversationId;
+
+      if (!convoId) {
+        const newConvo = await prisma.conversation.create({
+          data: { length: 0 },
+        });
+        convoId = newConvo.conversationId;
+      }
+
+      // Here you’d call your AI service to get the answer
+      // const answerText = await callAI(promptText)
+      const answerText = `AI response to: ${promptText}`; // placeholder
+
+      const prompt = await prisma.prompt.create({
         data: {
-          conversationId,
+          conversationId: convoId!,
           promptText,
           answerText,
         },
+      });
+
+      // Update conversation length
+      await prisma.conversation.update({
+        where: { conversationId: convoId! },
+        data: { length: { increment: 1 } },
+      });
+
+      return { conversationId: convoId, prompt };
+    },
+
+    // 2️⃣ Add Prompt Feedback
+    addPromptFeedback: async (
+      _: unknown,
+      { conversationId, promptNth, userFeedback }: AddPromptFeedbackArgs
+    ) => {
+      const prompts = await prisma.prompt.findMany({
+        where: { conversationId },
+        orderBy: { promptId: 'asc' },
+      });
+
+      const targetPrompt = prompts[promptNth - 1];
+      if (!targetPrompt) throw new Error(`Prompt #${promptNth} not found in conversation ${conversationId}`);
+
+      return prisma.prompt.update({
+        where: { promptId: targetPrompt.promptId },
+        data: { userFeedback },
+      });
+    },
+
+    // 3️⃣ Add Conversation Feedback
+    addConvoFeedback: async (
+      _: unknown,
+      { conversationId, userFeedbackMessage, userFeedback }: AddConvoFeedbackArgs
+    ) => {
+      return prisma.conversation.update({
+        where: { conversationId },
+        data: {
+          userFeedback,
+          userFeedbackMessage,
+        },
+        include: { prompts: true },
       });
     },
   },

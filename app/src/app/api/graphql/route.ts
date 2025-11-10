@@ -9,10 +9,9 @@ const server = new ApolloServer({
   resolvers,
 });
 
-// ✅ Create one handler function for both GET & POST
 const handler = startServerAndCreateNextHandler(server, {
   context: async () => ({ prisma }),
 });
 
-// ✅ Re-export GET and POST handlers for Next.js Route API
+
 export { handler as GET, handler as POST };

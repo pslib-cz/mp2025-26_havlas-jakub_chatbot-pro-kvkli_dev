@@ -1,86 +1,88 @@
 "use client";
-import { Message } from "../types/Message";
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
+import {  gql } from "@apollo/client";
+import {  useMutation } from "@apollo/client/react";
 
-
-
-export default function ChatWindow() {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState("");
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  // Load from sessionStorage on mount
-  useEffect(() => {
-    const stored = sessionStorage.getItem("chatMessages");
-    if (stored) setMessages(JSON.parse(stored));
-  }, []);
-
-  // Save to sessionStorage whenever messages change
-  useEffect(() => {
-    sessionStorage.setItem("chatMessages", JSON.stringify(messages));
-    scrollToBottom();
-  }, [messages]);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  const handleSend = () => {
-    if (!input.trim()) return;
-
-    const userMessage: Message = { role: "user", content: input.trim() };
-    setMessages(prev => [...prev, userMessage]);
-    setInput("");
-
-    // simulate bot reply
-    setTimeout(() => {
-      const botMessage: Message = { role: "bot", content: "📚 Hi! I'm your library chatbot." };
-      setMessages(prev => [...prev, botMessage]);
-    }, 600);
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleSend();
+const ADD_PROMPT = gql`
+  mutation AddPrompt($promptText: String!, $conversationId: Int) {
+    addPrompt(promptText: $promptText, conversationId: $conversationId) {
+      conversationId
+      prompt {
+        promptId
+        promptText
+        answerText
+        userFeedback
+        conversationId
+      }
+    }
+  }
+`;
+type addPromptData ={
+  addPrompt: {
+    conversationId: number;
+    prompt: {
+      promptId: number;
+      promptText: string;
+      answerText: string;
     }
   };
+}
+export default function ChatWindow() {
+   const [addPromptMutation, { data, loading, error }] = useMutation<addPromptData, { promptText: string; conversationId?: number | null }>(ADD_PROMPT);
+   const [conversationId, setConversationId] = useState<number | null>(null);
+ const [input, setInput] = useState("");
+const [messages, setMessages] = useState<string[]>([]);
+const [answers, setAnswers] = useState<string[]>([]);
+
+
+const handleClick = async () => {
+  setMessages([...messages, input]);
+
+  try {
+    const { data: addPromptResponse } = await addPromptMutation({
+      variables: {
+        promptText: input,
+        conversationId: conversationId,
+      },
+    });
+
+    if (addPromptResponse?.addPrompt.conversationId) {
+      setConversationId(addPromptResponse.addPrompt.conversationId);
+    }
+
+    setAnswers([...answers, addPromptResponse?.addPrompt.prompt.answerText || ""]);
+  } catch (err) {
+    console.error("Error adding prompt:", err);
+  }
+
+  setInput("");
+};
 
   return (
-    <div className="flex flex-col max-w-md h-[1000px] border rounded-xl shadow-lg bg-white overflow-hidden">
-      <div className="flex-1 p-4 overflow-y-auto bg-gray-50">
-        {messages.map((msg, i) => (
-          <div
-            key={i}
-            className={`mb-2 flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-          >
-            <div
-              className={`px-3 py-2 rounded-lg max-w-[80%] ${
-                msg.role === "user" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-800"
-              }`}
-            >
-              {msg.content}
-            </div>
-          </div>
-        ))}
-        <div ref={messagesEndRef} />
-      </div>
+  <>
+ 
 
-      <div className="p-3 border-t flex gap-2 bg-white">
-        <input
-          className="flex-1 border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-400"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyPress}
-          placeholder="Type a message..."
-        />
-        <button
-          onClick={handleSend}
-          className="bg-blue-500 text-white px-4 rounded-lg hover:bg-blue-600"
-        >
-          Send
-        </button>
+      <div>
+        <div>
+        {messages.map((msg, index) => (
+          <div key={index}>{msg}</div>
+        ))}
       </div>
-    </div>
+      <div>
+        {answers.map((ans, index) => (
+          <div key={index}>{ans}</div>
+        ))}
+      </div>
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Type a message..."
+            />
+          <button onClick={handleClick}>
+            Add Prompt
+          </button>
+      </div>
+  </>
   );
 }
+
