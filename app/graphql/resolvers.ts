@@ -1,4 +1,10 @@
 import { prisma } from '../lib/prisma';
+import OpenAI from "openai";
+import { systemPrompt } from '../modelCalling/prompt';
+import { findRelevantFaqs } from '../public/findRelevatFaqs';
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY!,
+});
 
 interface AddPromptArgs {
   promptText: string;
@@ -34,39 +40,47 @@ export const resolvers = {
   },
 
   Mutation: {
-    // 1️⃣ Add Prompt (and create conversation if needed)
     addPrompt: async (_: unknown, { promptText, conversationId }: AddPromptArgs) => {
       let convoId = conversationId;
 
       if (!convoId) {
-        const newConvo = await prisma.conversation.create({
-          data: { length: 0 },
-        });
+        const newConvo = await prisma.conversation.create({ data: { length: 0 } });
         convoId = newConvo.conversationId;
       }
 
-      // Here you’d call your AI service to get the answer
-      // const answerText = await callAI(promptText)
-      const answerText = `AI response to: ${promptText}`; // placeholder
+      // 🟢 Find relevant FAQs
+      const relatedFaqs: { q: string; a: string }[] = findRelevantFaqs(promptText);
+      const faqSection = relatedFaqs
+        .map((f: { q: string; a: string }) => `Q: ${f.q}\nA: ${f.a}`)
+        .join("\n\n");
 
-      const prompt = await prisma.prompt.create({
-        data: {
-          conversationId: convoId!,
-          promptText,
-          answerText,
+      const messages = [
+        { role: "system", content: systemPrompt },
+        {
+          role: "system",
+          content: faqSection
+            ? `Použij následující informace z oficiálních FAQ knihovny:\n\n${faqSection}`
+            : `Nemáš žádné konkrétní FAQ k dispozici.`
         },
+        { role: "user", content: promptText },
+      ];
+
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: messages as any,
+        temperature: 0.4,
       });
 
-      // Update conversation length
-      await prisma.conversation.update({
-        where: { conversationId: convoId! },
-        data: { length: { increment: 1 } },
+      const answerText = completion.choices[0].message.content ?? "Žádná odpověď";
+
+      const prompt = await prisma.prompt.create({
+        data: { conversationId: convoId!, promptText, answerText },
       });
 
       return { conversationId: convoId, prompt };
     },
 
-    // 2️⃣ Add Prompt Feedback
+ 
     addPromptFeedback: async (
       _: unknown,
       { conversationId, promptNth, userFeedback }: AddPromptFeedbackArgs
@@ -100,4 +114,4 @@ export const resolvers = {
       });
     },
   },
-};
+}
