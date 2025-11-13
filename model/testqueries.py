@@ -1,7 +1,8 @@
 import os
-import chromadb
 from openai import OpenAI
 from dotenv import load_dotenv
+import chromadb
+from chromadb.config import Settings
 
 # === 0. Load API key ===
 load_dotenv(".env.local")
@@ -12,26 +13,43 @@ if not api_key:
 client_openai = OpenAI(api_key=api_key)
 
 # === 1. Connect to Chroma ===
-# Use the same absolute path you used for ingestion
+# New PersistentClient uses Settings
 chroma_path = os.path.abspath("./chroma_db")
 print("📂 Using Chroma DB path:", chroma_path)
 
-chroma_client = chromadb.PersistentClient(path=chroma_path)
-collection = chroma_client.get_collection("books")
+chroma_client = chromadb.Client(
+    Settings(
+        chroma_db_impl="duckdb+parquet",
+        persist_directory=chroma_path
+    )
+)
+
+# New API: get or create collection
+collection_name = "books"
+try:
+    collection = chroma_client.get_collection(collection_name)
+except ValueError:
+    print(f"⚠️ Collection '{collection_name}' not found. Creating it...")
+    collection = chroma_client.create_collection(collection_name)
 
 # === 2. Check document count ===
+# count() replaced by .count() method with optional filter
 count = collection.count()
-print(f"📊 Total documents in collection: {count}")
+print(f"📊 Total documents in collection: {count['total']}")
 
-if count == 0:
+if count['total'] == 0:
     print("⚠️ No documents found. Did you run the ingestion script?")
     exit(1)
 
 # === 3. Peek at some stored records ===
-peek = collection.peek()
-print(collection.count())
-print(f"👀 Peeked {len(peek['documents'])} documents (showing up to 5):")
-for i, doc in enumerate(peek["documents"][:5]):
+# peek() no longer exists; use get() instead
+peek_size = 5
+peek = collection.get(limit=peek_size)
+documents = peek["documents"]
+metadatas = peek["metadatas"]
+
+print(f"👀 Peeked {len(documents)} documents (showing up to {peek_size}):")
+for i, doc in enumerate(documents[:peek_size]):
     print(f"{i+1}. {doc[:100]}...")  # limit text length for display
 
 # === 4. Helper: embed query ===

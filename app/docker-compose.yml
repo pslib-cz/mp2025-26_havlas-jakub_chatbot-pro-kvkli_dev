@@ -15,5 +15,18 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  chroma:
+    image: chromadb/chroma:latest
+    container_name: chromadb
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./chroma_db:/data
+    environment:
+      - IS_PERSISTENT=TRUE
+      - CHROMA_DB_IMPL=sqlite
+      - ANONYMIZED_TELEMETRY=False
+
 volumes:
   postgres_data:

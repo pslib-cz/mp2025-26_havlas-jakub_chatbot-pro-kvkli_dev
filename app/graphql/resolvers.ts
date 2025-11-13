@@ -1,10 +1,10 @@
 import { prisma } from '../lib/prisma';
-import OpenAI from "openai";
-import { systemPrompt } from '../modelCalling/prompt';
+import { openai } from '../lib/openAI';
 import { findRelevantFaqs } from '../public/findRelevatFaqs';
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-});
+import { searchVectorBooks } from '../modelCalling/searchVectorBooks';
+
+
+
 
 interface AddPromptArgs {
   promptText: string;
@@ -40,45 +40,96 @@ export const resolvers = {
   },
 
   Mutation: {
-    addPrompt: async (_: unknown, { promptText, conversationId }: AddPromptArgs) => {
-      let convoId = conversationId;
+   addPrompt: async (_: unknown, { promptText, conversationId }: AddPromptArgs) => {
+  let convoId = conversationId;
 
-      if (!convoId) {
-        const newConvo = await prisma.conversation.create({ data: { length: 0 } });
-        convoId = newConvo.conversationId;
-      }
+  const systemPrompt = `
+  Jsi knihovník Alda, virtuální asistent knihovny. 
+  Odpovídáš pouze na otázky o knihovně, knihách, autorech a literatuře.
+  Pokud se uživatel ptá na konkrétní knihu nebo autora, zavolej funkci "getRelatedBooks".
+  Mluv česky, buď zdvořilý a informativní.
+  `;
 
-      // 🟢 Find relevant FAQs
-      const relatedFaqs: { q: string; a: string }[] = findRelevantFaqs(promptText);
-      const faqSection = relatedFaqs
-        .map((f: { q: string; a: string }) => `Q: ${f.q}\nA: ${f.a}`)
-        .join("\n\n");
+  if (!convoId) {
+    const newConvo = await prisma.conversation.create({ data: { length: 0 } });
+    convoId = newConvo.conversationId;
+  }
 
-      const messages = [
-        { role: "system", content: systemPrompt },
-        {
-          role: "system",
-          content: faqSection
-            ? `Použij následující informace z oficiálních FAQ knihovny:\n\n${faqSection}`
-            : `Nemáš žádné konkrétní FAQ k dispozici.`
-        },
-        { role: "user", content: promptText },
-      ];
+  const relatedFaqs = findRelevantFaqs(promptText);
+  const faqSection = relatedFaqs
+    .map((f: { q: string; a: string }) => `Q: ${f.q}\nA: ${f.a}`)
+    .join("\n\n");
 
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: messages as any,
-        temperature: 0.4,
-      });
-
-      const answerText = completion.choices[0].message.content ?? "Žádná odpověď";
-
-      const prompt = await prisma.prompt.create({
-        data: { conversationId: convoId!, promptText, answerText },
-      });
-
-      return { conversationId: convoId, prompt };
+  const messages = [
+    { role: "system", content: systemPrompt },
+    {
+      role: "system",
+      content: faqSection
+        ? `Použij následující informace z oficiálních FAQ knihovny:\n\n${faqSection}`
+        : `Nemáš žádné konkrétní FAQ k dispozici.`
     },
+    { role: "user", content: promptText },
+  ];
+
+  // Define the available functions
+  const functions = [
+    {
+      name: "getRelatedBooks",
+      description:
+        "Vyhledá knihy podle názvu, autora nebo tématu v katalogu knihovny.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: {
+            type: "string",
+            description:
+              "Název knihy, autor nebo klíčové slovo, podle kterého se má hledat.",
+          },
+        },
+        required: ["query"],
+      },
+    },
+  ];
+
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: messages as any,
+    functions,
+    function_call: "auto",
+    temperature: 0.4,
+  });
+
+  const message = completion.choices[0].message;
+  let answerText = "Žádná odpověď";
+
+  // 🪄 If the model decides to call your book search
+  if (message.function_call?.name === "getRelatedBooks") {
+    const { query } = JSON.parse(message.function_call.arguments);
+
+    const books = await searchVectorBooks(query);
+
+    if (books.length > 0) {
+      answerText =
+        "Našel jsem tyto knihy, které by vás mohly zajímat:\n\n" +
+        books
+          .map(
+            (b) =>
+              `📘 *${b.title}* — ${b.author}\n${b.description || ""}`
+          )
+          .join("\n\n");
+    } else {
+      answerText = "Bohužel jsem nenašel žádné knihy, které by odpovídaly vašemu dotazu.";
+    }
+  } else {
+    answerText = message.content ?? "Žádná odpověď";
+  }
+
+  const prompt = await prisma.prompt.create({
+    data: { conversationId: convoId!, promptText, answerText },
+  });
+
+  return { conversationId: convoId, prompt };
+},
 
  
     addPromptFeedback: async (

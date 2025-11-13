@@ -107,3 +107,13 @@ model Conversation {
   userFeedback            Boolean?
   userFeedbackMessage     String?
 }
+
+
+
+
+---------------
+
+
+okay so I have a chatbot, and I have a vector database, I am using next, in the vecotr database there are books from the library catalog in this format Title, Author, subjects, descrtiption if it was null it was skipped or embedded without it example Bez legií by nebylo svobodného státu Čechů a Slováků : | Jenšovský, Václav, so I need a function in function calling, that would tell the ai to call if author is asking for specific book like: "Můj syn četl knihu Mašinka tomáš, máte nějaké další knihy o mašinkách?"
+
+
