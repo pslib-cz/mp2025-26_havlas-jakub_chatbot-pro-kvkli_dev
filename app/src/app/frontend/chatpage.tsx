@@ -34,9 +34,9 @@ export default function AddPromptButton() {
   };
 
   return (
-    
+
     <>
-    fr
+   
        <input
         
           placeholder="Type a message..."

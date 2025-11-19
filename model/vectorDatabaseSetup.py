@@ -5,6 +5,7 @@ import chromadb
 from openai import OpenAI
 from dotenv import load_dotenv
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
 
 # === 0. Load API key ===
 load_dotenv(".env.local")
@@ -24,7 +25,9 @@ chroma_path = os.path.abspath("./chroma_db")
 print("📂 Using Chroma DB path:", chroma_path)
 
 chroma_client = chromadb.PersistentClient(path=chroma_path)
-collection = chroma_client.get_or_create_collection("books")
+collection = chroma_client.create_collection("books",  embedding_function=OpenAIEmbeddingFunction(
+        model_name="text-embedding-3-small"
+    ))
 
 # === 3. Embedding helper ===
 def get_embedding(text):
