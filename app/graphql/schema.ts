@@ -21,6 +21,7 @@ export const typeDefs = gql`
   type Query {
     conversations: [Conversation!]!
     conversation(id: ID!): Conversation
+    prompts: [Prompt!]!
   }
 
   type Mutation {
@@ -35,6 +36,7 @@ export const typeDefs = gql`
       userFeedbackMessage: String
       userFeedback: Boolean
     ): Conversation!
+     deletePrompt(id: ID!): Int!
   }
 
   type AddPromptResponse {

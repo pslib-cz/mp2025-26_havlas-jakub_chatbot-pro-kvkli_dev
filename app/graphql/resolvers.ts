@@ -31,6 +31,13 @@ export const resolvers = {
       });
     },
 
+    prompts: async () => {
+  const prompts = await prisma.prompt.findMany({
+    include: { conversation: true },
+  });
+  return prompts || []; // <- ensure array, never null
+},
+
     conversation: async (_: unknown, { id }: { id: string }) => {
       return prisma.conversation.findUnique({
         where: { conversationId: Number(id) },
@@ -141,7 +148,11 @@ export const resolvers = {
         orderBy: { promptId: 'asc' },
       });
 
-      const targetPrompt = prompts[promptNth - 1];
+      const promptsForConversation = prompts.filter(
+        (p) => p.conversationId === conversationId
+      );
+      const targetPrompt = promptsForConversation[promptNth];
+
       if (!targetPrompt) throw new Error(`Prompt #${promptNth} not found in conversation ${conversationId}`);
 
       return prisma.prompt.update({
@@ -164,5 +175,14 @@ export const resolvers = {
         include: { prompts: true },
       });
     },
+ 
+     deletePrompt: async (_: unknown, { id }: { id: number }) => {
+      console.log("Deleting prompt with ID:", id);
+  const deletedPrompt = await prisma.prompt.delete({
+    where: { promptId: Number(id) }, // only the ID, not the whole prompt
+  });
+
+  return deletedPrompt.promptId;
+},
   },
-}
+};

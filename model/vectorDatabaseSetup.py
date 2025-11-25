@@ -18,20 +18,53 @@ client_openai = OpenAI(api_key=api_key)
 # === 1. Load CSV ===
 csv_path = "model/books_cleaned.csv"
 df = pd.read_csv(csv_path, encoding="utf-8")
-texts = df["text_for_embedding"].astype(str).tolist()
+
+# === 1.1 Create embedding-ready text by combining fields ===
+def make_embedding_text(row):
+    parts = []
+
+    title = str(row.get("Title", "")).strip()
+    if title:
+        parts.append(f"Title: {title}")
+
+    author = str(row.get("Author", "")).strip()
+    if author:
+        parts.append(f"Author: {author}")
+
+    subjects = str(row.get("Subjects", "")).strip()
+    if subjects:
+        parts.append(f"Subjects: {subjects}")
+
+    description = str(row.get("Description", "")).strip()
+    if description:
+        parts.append(f"Description: {description}")
+
+    # Join only non-empty fields
+    return "\n".join(parts)
+
+
+df["embedding_text"] = df.apply(make_embedding_text, axis=1)
+texts = df["embedding_text"].astype(str).tolist()
 
 # === 2. Chroma DB ===
 chroma_path = os.path.abspath("./chroma_db")
 print("📂 Using Chroma DB path:", chroma_path)
 
 chroma_client = chromadb.PersistentClient(path=chroma_path)
-collection = chroma_client.create_collection("books",  embedding_function=OpenAIEmbeddingFunction(
-        model_name="text-embedding-3-small"
-    ))
+
+# Delete old collection if exists
+try:
+    chroma_client.delete_collection("books")
+except: 
+    pass
+
+collection = chroma_client.create_collection(
+    "books",
+    embedding_function=OpenAIEmbeddingFunction(model_name="text-embedding-3-small")
+)
 
 # === 3. Embedding helper ===
 def get_embedding(text):
-    """Get embedding for a single text"""
     try:
         response = client_openai.embeddings.create(
             model="text-embedding-3-small",
@@ -42,9 +75,8 @@ def get_embedding(text):
         print(f"⚠️ Embedding failed: {e}")
         return None
 
-# === 4. Parallel embedding function ===
+# === 4. Parallel embedding ===
 def embed_batch(batch_texts, max_workers=10):
-    """Embed a list of texts in parallel"""
     embeddings = [None] * len(batch_texts)
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         future_to_idx = {
@@ -53,41 +85,47 @@ def embed_batch(batch_texts, max_workers=10):
         }
         for future in as_completed(future_to_idx):
             idx = future_to_idx[future]
-            emb = future.result()
-            embeddings[idx] = emb
-    return [e for e in embeddings if e is not None]
+            embeddings[idx] = future.result()
+    return embeddings
 
 # === 5. Ingestion loop ===
-batch_size = 500   # ⚡ tune this based on your system
-max_workers = 6   # ⚡ number of threads for parallel embedding
+batch_size = 400
+max_workers = 6
 
 total = len(texts)
 print(f"📊 Starting ingestion of {total:,} records in batches of {batch_size} ...")
 
 start_time = time.time()
+
 for i in range(0, total, batch_size):
     batch_texts = texts[i:i+batch_size]
     batch_ids = [f"book_{j}" for j in range(i, i+len(batch_texts))]
 
-    # Generate embeddings in parallel
     print(f"🧠 Embedding batch {i // batch_size + 1} ({i} – {i+len(batch_texts)} of {total}) ...")
     batch_embeddings = embed_batch(batch_texts, max_workers=max_workers)
 
-    # If some embeddings failed, adjust lists
-    if len(batch_embeddings) != len(batch_texts):
-        valid_pairs = [(id_, txt, emb) for id_, txt, emb in zip(batch_ids, batch_texts, batch_embeddings) if emb]
-        batch_ids, batch_texts, batch_embeddings = zip(*valid_pairs)
+    # Remove failed embeddings
+    valid = [
+        (bid, btxt, emb)
+        for bid, btxt, emb in zip(batch_ids, batch_texts, batch_embeddings)
+        if emb is not None
+    ]
+
+    if not valid:
+        print("⚠️ Entire batch failed, skipping.")
+        continue
+
+    valid_ids, valid_docs, valid_emb = zip(*valid)
 
     # Save to Chroma
     collection.add(
-        ids=list(batch_ids),
-        documents=list(batch_texts),
-        embeddings=list(batch_embeddings)
+        ids=list(valid_ids),
+        documents=list(valid_docs),
+        embeddings=list(valid_emb)
     )
 
     print(f"✅ Saved batch {i // batch_size + 1}, total inserted: {collection.count()}")
 
-    # Optional: checkpoint time
     elapsed = time.time() - start_time
     print(f"⏱️ Elapsed time: {elapsed/60:.1f} min")
 

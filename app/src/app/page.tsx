@@ -1,6 +1,7 @@
-import ChatWindow from "./components/chatWindow";
-
+import Chatbot from "./components/chatbot";
 export default function Home() {
+
+  
   return (
     <>
   
@@ -8,8 +9,8 @@ export default function Home() {
       Hello world!
     </h1>
    
-   
-     <ChatWindow />
+      <Chatbot />
+ 
     </>
    
     
