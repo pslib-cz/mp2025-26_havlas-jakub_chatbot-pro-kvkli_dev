@@ -36,7 +36,15 @@ export const typeDefs = gql`
       userFeedbackMessage: String
       userFeedback: Boolean
     ): Conversation!
-     deletePrompt(id: ID!): Int!
+    deletePrompt(id: ID!): Int!
+    crawlWebsite(url: String): CrawlResponse!
+  }
+
+  type CrawlResponse {
+    success: Boolean!
+    message: String!
+    pagesCount: Int!
+    outputFile: String!
   }
 
   type AddPromptResponse {

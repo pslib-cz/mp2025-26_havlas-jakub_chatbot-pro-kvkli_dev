@@ -18,4 +18,6 @@ model/books_fixed.csv
 model/books_cleaned.csv
 books_cleaned.csv
 
-chroma_db/
+app/chroma_db/chroma.sqlite3
+app/chroma_db/*
+chroma_db/*

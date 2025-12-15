@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+     "baseUrl": ".",
     "target": "es2023",
     "rootDirs": ["src"],
     "outDir": "dist",
@@ -22,7 +23,7 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["src/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "public/findRelevatFaqs.js"],

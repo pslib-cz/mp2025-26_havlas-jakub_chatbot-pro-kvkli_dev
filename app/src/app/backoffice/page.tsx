@@ -3,7 +3,7 @@
 import { gql } from "@apollo/client";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { PieChart, Pie, Cell, Legend, Tooltip } from "recharts";
-
+import CrawlPanel from "./crawlButton";
 const GET_PROMPTS = gql`
   query GetPrompts {
     prompts {
@@ -67,7 +67,7 @@ export default function PromptsPage() {
   return (
     <div className="p-8 bg-gray-50 dark:bg-gray-900 min-h-screen">
       <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">All Prompts</h1>
-
+      <CrawlPanel />
       {/* Pie chart */}
       <div className="mb-8 flex justify-center">
         <PieChart width={300} height={300}>
