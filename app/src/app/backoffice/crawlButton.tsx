@@ -27,7 +27,7 @@ function CrawlPanel(): React.ReactElement {
 
   const handleCrawl = () => {
     crawlWebsite({
-      variables: { url: "https://kvkli.cz" }
+      variables: { url: "https://www.kvkli.cz" }
     });
   };
 
