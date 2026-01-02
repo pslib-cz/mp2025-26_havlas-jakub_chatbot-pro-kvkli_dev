@@ -1,6 +1,6 @@
 import { crawlSite } from "../services/crawl.service";
 import { flattenPagesToChunks, diffChunks } from "../services/compare.service";
-import { fetchExistingChunks, updateVectorDB } from "../services/embed.service";
+import { fetchExistingChunks, updateVectorDB } from "../services/site.service";
 
 export const crawlResolvers = {
   Mutation: {

@@ -12,9 +12,8 @@ export const promptService = {
       convoId = newConvo.conversationId;
     }
 
-//const faqs = faqService.findRelevant(promptText);
-const faqs = [{ q: "Jak mohu vypůjčit knihu?", a: "Knihy si můžete vypůjčit pomocí čtenářského průkazu na pokladně knihovny." }];
-    const answer = await aiService.generateWithFaq({ promptText, faqs });
+
+    const answer = await aiService.generateWithFaq({ promptText });
 
     const prompt = await prisma.prompt.create({
       data: {

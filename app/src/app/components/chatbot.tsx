@@ -6,6 +6,23 @@ import { Send, MessageCircle } from "lucide-react";
 import { gql } from "@apollo/client";
 import { useMutation } from "@apollo/client/react";
 
+// Helper function to render markdown-style text
+function renderMarkdown(text: string) {
+  const parts = text.split(/(\*\*.*?\*\*)/g);
+  
+  return parts.map((part, index) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      const content = part.slice(2, -2);
+      return (
+        <strong key={index} className="font-bold text-lg">
+          {content}
+        </strong>
+      );
+    }
+    return <span key={index}>{part}</span>;
+  });
+}
+
 const ADD_PROMPT = gql`
   mutation AddPrompt($promptText: String!, $conversationId: Int) {
     addPrompt(promptText: $promptText, conversationId: $conversationId) {
@@ -122,7 +139,7 @@ export default function Chatbot() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 30 }}
-            className="w-80 md:w-96 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden"
+            className="w-96 md:w-[500px] lg:w-[600px] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden"
           >
             <div className="bg-indigo-900 dark:bg-indigo-800 text-white p-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -137,7 +154,7 @@ export default function Chatbot() {
               </button>
             </div>
 
-            <div className="p-4 h-80 overflow-y-auto space-y-4 bg-gray-50 dark:bg-gray-800">
+            <div className="p-4 h-[500px] overflow-y-auto space-y-4 bg-gray-50 dark:bg-gray-800">
               {messages.map((msg, i) => (
                 <div key={i} className="flex flex-col gap-1">
                   <div className="bg-gray-200 dark:bg-gray-700 text-black dark:text-white max-w-[80%] p-3 rounded-xl self-end">
@@ -145,11 +162,11 @@ export default function Chatbot() {
                   </div>
                   {answers[i] && (
                     <>
-                      <div className="bg-indigo-900 dark:bg-indigo-700 text-white max-w-[80%] p-3 rounded-xl">
-                      {answers[i]} asdasd
-                    </div>
-                    <button className="bg-indigo-900 dark:bg-indigo-700" onClick={handleLike}> like </button>
-                    <button className="bg-indigo-900 dark:bg-indigo-700" onClick={handleDisLike}> dislike  </button>
+                      <div className="bg-indigo-900 dark:bg-indigo-700 text-white max-w-[80%] p-3 rounded-xl whitespace-pre-wrap">
+                        {renderMarkdown(answers[i])}
+                      </div>
+                      <button className="bg-indigo-900 dark:bg-indigo-700 text-white px-3 py-1 rounded" onClick={handleLike}> like </button>
+                      <button className="bg-indigo-900 dark:bg-indigo-700 text-white px-3 py-1 rounded" onClick={handleDisLike}> dislike  </button>
                     </>
                   
                   )}
