@@ -1,0 +1,29 @@
+
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "windows"]
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Prompt {
+  promptId        Int           @id @default(autoincrement())
+  promptText      String        @db.Text
+  answerText      String        @db.Text
+  conversationId  Int
+  conversation    Conversation  @relation(fields: [conversationId], references: [conversationId])
+  userFeedback    Boolean?
+  // questionType   String?
+}
+
+model Conversation {
+  conversationId          Int       @id @default(autoincrement())
+  prompts                 Prompt[]
+  length                  Int
+  userFeedback            Boolean?
+  userFeedbackMessage     String?
+}

@@ -1,0 +1,46 @@
+APi calls (frontend)
+
+AddPrompt
+{
+  promptText
+  conversationId?
+}
+if conversationId == null => create convo => return conversationId
+put promptText To Ai
+return Ai's answer
+ädd prompt Text to database
+
+Add promptFeedback
+{
+  conversationID
+  promptNth
+  userFeedback
+}
+add userFeedback to correct prompt
+
+Add Convofeedback
+{
+  conversationID
+  userFeedbackMessage?     
+  userFeedback?
+}
+add userFeedback to correct conversation
+
+
+model Prompt {
+  promptId        Int           @id @default(autoincrement())
+  promptText      String        @db.Text
+  answerText      String        @db.Text
+  conversationId  Int
+  conversation    Conversation  @relation(fields: [conversationId], references: [conversationId])
+  userFeedback    Boolean?
+  // questionType   String?
+}
+
+model Conversation {
+  conversationId          Int       @id @default(autoincrement())
+  prompts                 Prompt[]
+  length                  Int
+  userFeedback            Boolean?
+  userFeedbackMessage     String?
+}

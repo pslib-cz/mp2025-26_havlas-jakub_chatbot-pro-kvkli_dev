@@ -1,0 +1,23 @@
+# Global ignores
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.vscode/
+.vs/
+.DS_Store
+.env.local
+
+# Project-specific
+harvester/**/bin/
+harvester/**/obj/
+model/.venv/
+model/books.csv
+model/books_fixed.csv
+model/books_cleaned.csv
+books_cleaned.csv
+
+app/chroma_db/chroma.sqlite3
+app/chroma_db/*
+chroma_db/*
