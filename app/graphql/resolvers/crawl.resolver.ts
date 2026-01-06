@@ -18,12 +18,8 @@ export const crawlResolvers = {
         return {
           success: false,
           message: crawlResult.message,
-          stats: {
-            pagesCrawled: crawlResult.pagesCount,
-            chunksAdded: 0,
-            chunksRemoved: 0,
-            chunksUnchanged: 0,
-          },
+          pagesCount: crawlResult.pagesCount,
+          outputFile: crawlResult.outputFile,
         };
       }
 
@@ -60,15 +56,19 @@ export const crawlResolvers = {
       console.log(`   - Added: ${updateResult.added}`);
       console.log(`   - Removed: ${updateResult.removed}`);
 
+      // Step 7: Clean up - delete the temporary JSON file
+      try {
+        await fs.unlink(crawlResult.outputFile);
+        console.log(`🗑️ Deleted temporary file: ${crawlResult.outputFile}`);
+      } catch (error) {
+        console.warn(`⚠️ Failed to delete temporary file: ${error}`);
+      }
+
       return {
         success: true,
         message: `Crawled ${crawlResult.pagesCount} pages, updated ${updateResult.added} chunks, removed ${updateResult.removed} chunks`,
-        stats: {
-          pagesCrawled: crawlResult.pagesCount,
-          chunksAdded: updateResult.added,
-          chunksRemoved: updateResult.removed,
-          chunksUnchanged: diff.chunksUnchanged.length,
-        },
+        pagesCount: crawlResult.pagesCount,
+        outputFile: crawlResult.outputFile,
       };
     },
   },
