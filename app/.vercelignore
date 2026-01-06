@@ -1,0 +1,16 @@
+# Crawler output files
+crawler-output/
+
+# Chroma DB local files (use remote Chroma in production)
+chroma_db/
+
+# Python model files
+model/
+
+# Test files
+tests/
+coverage/
+
+# Development files
+.env.local
+.vscode/
