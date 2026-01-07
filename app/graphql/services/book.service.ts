@@ -59,8 +59,7 @@ export const vectorService = {
    */
   async searchBooks(query: string) {
     try {
-      // Ensure Chroma is reachable
-      await chroma.listCollections();
+      
 
       const collection = await chroma.getCollection({ name: "books" });
       if (!collection) {

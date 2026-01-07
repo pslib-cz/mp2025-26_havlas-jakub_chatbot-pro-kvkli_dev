@@ -134,20 +134,19 @@ function extractStructuredSections(mainContent: HTMLElement): ContentSection[] {
       
       const element = child as HTMLElement;
       const tagName = element.tagName?.toLowerCase();
-      
-      // Check if this is a heading
+
       const headingMatch = tagName?.match(/^h([1-6])$/);
       if (headingMatch) {
         const level = parseInt(headingMatch[1], 10);
         const headingText = cleanText(element.textContent || "");
 
         if (headingText) {
-          // Save previous section if it has meaningful content
+
           if (currentSection && isMeaningful(currentSection.content)) {
             sections.push(currentSection);
           }
 
-          // Start new section
+
           currentSection = {
             heading: headingText,
             level: level,
@@ -155,19 +154,19 @@ function extractStructuredSections(mainContent: HTMLElement): ContentSection[] {
           };
         }
       } else {
-        // Not a heading - collect text for current section
+
         const text = cleanText(collectText(element));
         
         if (text) {
           if (!currentSection) {
-            // Content before any heading
+
             currentSection = {
               heading: "Introduction",
               level: 1,
               content: text,
             };
           } else {
-            // Add to current section
+
             currentSection.content += (currentSection.content ? " " : "") + text;
           }
         }
@@ -180,7 +179,6 @@ function extractStructuredSections(mainContent: HTMLElement): ContentSection[] {
 
   walk(mainContent);
 
-  // Don't forget the last section
   //@ts-ignore
   if (currentSection && isMeaningful(currentSection.content)) {
     sections.push(currentSection);

@@ -19,7 +19,22 @@ client_openai = OpenAI(api_key=api_key)
 csv_path = "model/books_cleaned.csv"
 df = pd.read_csv(csv_path, encoding="utf-8")
 
-# === 1.1 Create embedding-ready text by combining fields ===
+# === 1.1 Filter to only keep records with all required fields ===
+def has_all_fields(row):
+    """Check if row has all required fields (Title, Author, Subjects, Description)"""
+    required_fields = ["Title", "Author", "Subjects", "Description"]
+    for field in required_fields:
+        value = str(row.get(field, "")).strip()
+        if not value or value.lower() in ["nan", "none", ""]:
+            return False
+    return True
+
+initial_count = len(df)
+df = df[df.apply(has_all_fields, axis=1)].reset_index(drop=True)
+filtered_count = len(df)
+print(f"📋 Filtered dataset: {initial_count:,} → {filtered_count:,} records (kept only records with all fields)")
+
+# === 1.2 Create embedding-ready text by combining fields ===
 def make_embedding_text(row):
     parts = []
 

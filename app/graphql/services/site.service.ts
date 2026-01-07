@@ -50,9 +50,7 @@ async function generateEmbeddings(texts: string[]): Promise<number[][]> {
   return embeddings;
 }
 
-/**
- * Fetch all existing chunks from Chroma DB
- */
+
 export async function fetchExistingChunks(): Promise<Chunk[]> {
   try {
     const collection = await getCollection();
@@ -87,9 +85,7 @@ export async function fetchExistingChunks(): Promise<Chunk[]> {
   }
 }
 
-/**
- * Update vector DB with new/changed chunks and remove deleted chunks
- */
+
 export async function updateVectorDB(
   chunksToAdd: Chunk[],
   chunksToRemove: Chunk[]
@@ -141,9 +137,7 @@ export async function updateVectorDB(
   return { added, removed };
 }
 
-/**
- * Search for similar content in vector DB
- */
+
 export async function searchSimilarContent(
   query: string,
   limit: number = 5
