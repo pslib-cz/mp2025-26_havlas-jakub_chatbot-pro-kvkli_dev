@@ -3,7 +3,7 @@ import { ChromaClient, CloudClient } from "chromadb";
 // Suppress deprecation warnings from chromadb library in production
 if (process.env.NODE_ENV === "production") {
   const originalEmitWarning = process.emitWarning;
-  process.emitWarning = function (warning, ...args: any[]) {
+  process.emitWarning = function (warning, ...args) {
     if (
       typeof warning === "string" &&
       warning.includes("url.parse()") &&
@@ -11,6 +11,8 @@ if (process.env.NODE_ENV === "production") {
     ) {
       return;
     }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    // @ts-ignore
     return originalEmitWarning.call(process, warning, ...args);
   };
 }
