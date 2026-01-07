@@ -74,6 +74,7 @@ export const vectorService = {
       const embeddingRes = await openai.embeddings.create({
         model: "text-embedding-3-small",
         input: rewritten,
+        dimensions: 384,
       });
 
       const queryEmbedding = embeddingRes.data[0].embedding;
