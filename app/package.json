@@ -25,7 +25,7 @@
         "@chroma-core/openai": "^0.1.9",
         "@prisma/client": "^6.18.0",
         "axios": "^1.13.2",
-        "chromadb": "^3.1.5",
+        "chromadb": "^3.2.0",
         "fast-xml-parser": "^5.3.3",
         "framer-motion": "^12.23.24",
         "graphql": "^16.12.0",

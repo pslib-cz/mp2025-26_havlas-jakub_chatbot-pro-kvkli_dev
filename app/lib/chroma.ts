@@ -1,5 +1,20 @@
 import { ChromaClient, CloudClient } from "chromadb";
 
+// Suppress deprecation warnings from chromadb library in production
+if (process.env.NODE_ENV === "production") {
+  const originalEmitWarning = process.emitWarning;
+  process.emitWarning = function (warning, ...args: any[]) {
+    if (
+      typeof warning === "string" &&
+      warning.includes("url.parse()") &&
+      warning.includes("DEP0169")
+    ) {
+      return;
+    }
+    return originalEmitWarning.call(process, warning, ...args);
+  };
+}
+
 // Use CloudClient for production, ChromaClient for local development
 export const chroma = process.env.CHROMA_API_KEY
   ? new CloudClient({
