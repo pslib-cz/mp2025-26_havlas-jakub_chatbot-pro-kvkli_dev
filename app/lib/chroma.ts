@@ -12,7 +12,7 @@ if (process.env.NODE_ENV === "production") {
       return;
     }
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    // @ts-expect-error
+    // @ts-expect-error protože to nechápu
     return originalEmitWarning.call(process, warning, ...args);
   };
 }
