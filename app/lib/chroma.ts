@@ -12,7 +12,7 @@ if (process.env.NODE_ENV === "production") {
       return;
     }
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    // @ts-ignore
+    // @ts-expect-error
     return originalEmitWarning.call(process, warning, ...args);
   };
 }
