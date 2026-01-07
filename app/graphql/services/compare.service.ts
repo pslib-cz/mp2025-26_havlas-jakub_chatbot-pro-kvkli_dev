@@ -161,7 +161,17 @@ export function diffChunks(
 
 /**
  * Get unique chunk ID for Chroma DB
+ * Uses MD5 hash for long IDs to comply with Chroma Cloud's 128-byte limit
  */
 export function getChunkId(chunk: Chunk): string {
-  return `${chunk.url}::${chunk.section_heading}::${chunk.chunk_index}`;
+  const fullId = `${chunk.url}::${chunk.section_heading}::${chunk.chunk_index}`;
+  
+  // If ID is short enough, use it directly
+  if (fullId.length <= 100) {
+    return fullId;
+  }
+  
+  // Hash long IDs to stay under Chroma Cloud's 128-byte limit
+  const hash = crypto.createHash('md5').update(fullId).digest('hex');
+  return `hash_${hash}`;
 }
