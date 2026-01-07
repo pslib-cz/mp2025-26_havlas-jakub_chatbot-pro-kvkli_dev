@@ -21,6 +21,7 @@
         "@apollo/client": "^4.0.9",
         "@apollo/server": "^5.1.0",
         "@as-integrations/next": "^4.1.0",
+        "@chroma-core/cohere": "^0.1.8",
         "@chroma-core/default-embed": "^0.1.9",
         "@chroma-core/openai": "^0.1.9",
         "@prisma/client": "^6.18.0",

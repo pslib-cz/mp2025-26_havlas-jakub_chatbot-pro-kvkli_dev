@@ -42,7 +42,7 @@ const cloudClient = new CloudClient({
   database: process.env.CHROMA_DATABASE || "books",
 });
 
-const COLLECTIONS_TO_MIGRATE = ["books"]; // kvkli_content already migrated
+const COLLECTIONS_TO_MIGRATE = ["kvkli_content"]; // kvkli_content already migrated
 
 /**
  * Migrate a single collection from local to cloud

@@ -13,7 +13,10 @@ async function getCollection() {
   try {
     return await chroma.getOrCreateCollection({
       name: COLLECTION_NAME,
-      metadata: { description: "KVKLI website content chunks" },
+      metadata: { 
+        description: "KVKLI website content chunks",
+        "hnsw:space": "cosine"
+      },
     });
   } catch (error) {
     console.error("Error getting/creating collection:", error);
@@ -35,6 +38,7 @@ async function generateEmbeddings(texts: string[]): Promise<number[][]> {
       const response = await openai.embeddings.create({
         model: EMBEDDING_MODEL,
         input: batch,
+        dimensions: 384,
       });
 
       const batchEmbeddings = response.data.map((item) => item.embedding);
@@ -149,6 +153,7 @@ export async function searchSimilarContent(
     const response = await openai.embeddings.create({
       model: EMBEDDING_MODEL,
       input: query,
+      dimensions: 1536,
     });
     const queryEmbedding = response.data[0].embedding;
 
